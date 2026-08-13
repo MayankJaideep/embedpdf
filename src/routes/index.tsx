@@ -48,6 +48,8 @@ function Index() {
   const openFile = useCallback((file?: File | null) => {
     if (!file) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return;
+    setMetrics({ ...emptyMetrics, fileSize: file.size });
+    setLoadStart(performance.now());
     setFileUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
