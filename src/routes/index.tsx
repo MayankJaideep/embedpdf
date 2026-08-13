@@ -121,9 +121,20 @@ function Index() {
             <Suspense
               fallback={<p className="p-6 text-sm text-muted-foreground">Loading viewer…</p>}
             >
-              <ClientPdfViewer key={fileUrl} src={fileUrl} />
+              <ClientPdfViewer
+                key={fileUrl}
+                src={fileUrl}
+                loadStart={loadStart}
+                onMetrics={patchMetrics}
+              />
             </Suspense>
           </ClientOnly>
+        )}
+        {fileUrl && (
+          <PerfPanel
+            metrics={metrics}
+            onReset={() => setMetrics({ ...emptyMetrics, fileSize: metrics.fileSize })}
+          />
         )}
       </main>
     </div>
