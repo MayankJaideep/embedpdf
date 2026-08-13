@@ -30,7 +30,14 @@ function Index() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [dragging, setDragging] = useState(false);
+  const [loadStart, setLoadStart] = useState(0);
+  const [metrics, setMetrics] = useState<PerfMetrics>(emptyMetrics);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const patchMetrics = useCallback(
+    (patch: Partial<PerfMetrics>) => setMetrics((m) => ({ ...m, ...patch })),
+    [],
+  );
 
   useEffect(() => {
     return () => {
