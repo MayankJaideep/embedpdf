@@ -1,5 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { PerfPanel, emptyMetrics, type PerfMetrics } from "@/components/perf-panel";
 
 const ClientPdfViewer = lazy(() => import("@/components/pdf-viewer.client"));
 
@@ -29,7 +30,14 @@ function Index() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [dragging, setDragging] = useState(false);
+  const [loadStart, setLoadStart] = useState(0);
+  const [metrics, setMetrics] = useState<PerfMetrics>(emptyMetrics);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const patchMetrics = useCallback(
+    (patch: Partial<PerfMetrics>) => setMetrics((m) => ({ ...m, ...patch })),
+    [],
+  );
 
   useEffect(() => {
     return () => {
@@ -40,6 +48,8 @@ function Index() {
   const openFile = useCallback((file?: File | null) => {
     if (!file) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return;
+    setMetrics({ ...emptyMetrics, fileSize: file.size });
+    setLoadStart(performance.now());
     setFileUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
@@ -76,7 +86,7 @@ function Index() {
         onChange={(e) => openFile(e.target.files?.[0])}
       />
 
-      <main className="min-h-0 flex-1">
+      <main className="relative min-h-0 flex-1">
         {!fileUrl ? (
           <div className="flex h-full items-center justify-center p-6">
             <div
@@ -111,9 +121,20 @@ function Index() {
             <Suspense
               fallback={<p className="p-6 text-sm text-muted-foreground">Loading viewer…</p>}
             >
-              <ClientPdfViewer key={fileUrl} src={fileUrl} />
+              <ClientPdfViewer
+                key={fileUrl}
+                src={fileUrl}
+                loadStart={loadStart}
+                onMetrics={patchMetrics}
+              />
             </Suspense>
           </ClientOnly>
+        )}
+        {fileUrl && (
+          <PerfPanel
+            metrics={metrics}
+            onReset={() => setMetrics({ ...emptyMetrics, fileSize: metrics.fileSize })}
+          />
         )}
       </main>
     </div>
