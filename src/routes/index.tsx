@@ -1,5 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { PerfPanel, emptyMetrics, type PerfMetrics } from "@/components/perf-panel";
 
 const ClientPdfViewer = lazy(() => import("@/components/pdf-viewer.client"));
 
