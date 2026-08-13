@@ -86,7 +86,7 @@ function Index() {
         onChange={(e) => openFile(e.target.files?.[0])}
       />
 
-      <main className="min-h-0 flex-1">
+      <main className="relative min-h-0 flex-1">
         {!fileUrl ? (
           <div className="flex h-full items-center justify-center p-6">
             <div
