@@ -31,12 +31,12 @@ export async function runEmbedPdfBenchmark(
     jsHeapBytes: null,
   };
   let pageCount: number | null = null;
-  let root: Root | undefined;
+  const holder: { root?: Root } = {};
 
   try {
     const registryReady = new Promise<PluginRegistry>((resolve) => {
-      root = createRoot(container);
-      root.render(
+      holder.root = createRoot(container);
+      holder.root.render(
         <PDFViewer
           config={{ src: fileUrl, theme: { preference: "light" } }}
           style={{ width: "100%", height: "100%" }}
@@ -107,7 +107,7 @@ export async function runEmbedPdfBenchmark(
   } catch (err) {
     metrics.error = err instanceof Error ? err.message : String(err);
   } finally {
-    root?.unmount();
+    holder.root?.unmount();
     container.innerHTML = "";
   }
 
