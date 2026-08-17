@@ -31,7 +31,7 @@ export async function runEmbedPdfBenchmark(
     jsHeapBytes: null,
   };
   let pageCount: number | null = null;
-  let root: Root | null = null;
+  let root: Root | undefined;
 
   try {
     const registryReady = new Promise<PluginRegistry>((resolve) => {
