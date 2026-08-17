@@ -130,7 +130,8 @@ export function waitForFirstCanvas(container: HTMLElement, timeoutMs = 60000): P
       done = true;
       observer.disconnect();
       window.clearInterval(poll);
-      ok ? resolve(performance.now()) : reject(new Error("first page render timeout"));
+      if (ok) resolve(performance.now());
+      else reject(new Error("first page render timeout"));
     };
     const check = () => {
       const canvases = Array.from(container.querySelectorAll("canvas"));
