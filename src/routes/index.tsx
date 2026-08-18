@@ -96,11 +96,34 @@ function Benchmark() {
       userAgent: navigator.userAgent,
     };
 
+    const newUrl = () =>
+      URL.createObjectURL(new Blob([buffer.slice(0)], { type: "application/pdf" }));
+    const cool = async (ms = 1500) => {
+      stage.innerHTML = "";
+      await new Promise((r) => setTimeout(r, ms));
+    };
+
     try {
+      // ---- Module preload (kept out of every measurement) ----
+      setStatus("Preparing SDKs…");
+      const { runEmbedPdfBenchmark, EMBEDPDF_VERSION } = await import("@/lib/bench-embedpdf");
+      const { runNutrientBenchmark } = await import("@/lib/bench-nutrient");
+
+      // ---- Warm-up pass: identical for both SDKs, results discarded ----
+      if (warmup) {
+        setStatus("Warm-up: EmbedPDF…");
+        const wUrl = newUrl();
+        await runEmbedPdfBenchmark(stage, wUrl, query);
+        URL.revokeObjectURL(wUrl);
+        await cool();
+        setStatus("Warm-up: PSPDFKit / Nutrient…");
+        await runNutrientBenchmark(stage, buffer, query);
+        await cool();
+      }
+
       // ---- Pass 1: EmbedPDF ----
       setStatus("Running EmbedPDF…");
-      const { runEmbedPdfBenchmark, EMBEDPDF_VERSION } = await import("@/lib/bench-embedpdf");
-      const url = URL.createObjectURL(new Blob([buffer.slice(0)], { type: "application/pdf" }));
+      const url = newUrl();
       const embed = await runEmbedPdfBenchmark(stage, url, query);
       URL.revokeObjectURL(url);
       persist({
