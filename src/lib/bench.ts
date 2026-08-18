@@ -120,6 +120,20 @@ export function downloadCsv(runs: BenchRun[], fileName = "pdf-benchmark.csv") {
   URL.revokeObjectURL(url);
 }
 
+/** Collects canvases across nested shadow roots (EmbedPDF renders inside a web component). */
+function deepCanvases(root: ParentNode): HTMLCanvasElement[] {
+  const out: HTMLCanvasElement[] = [];
+  const walk = (node: ParentNode) => {
+    out.push(...(Array.from(node.querySelectorAll("canvas")) as HTMLCanvasElement[]));
+    for (const el of Array.from(node.querySelectorAll("*"))) {
+      const sr = (el as HTMLElement).shadowRoot;
+      if (sr) walk(sr);
+    }
+  };
+  walk(root);
+  return out;
+}
+
 /** Waits until the first real page canvas exists and has painted pixels. */
 export function waitForFirstCanvas(container: HTMLElement, timeoutMs = 60000): Promise<number> {
   return new Promise((resolve, reject) => {
