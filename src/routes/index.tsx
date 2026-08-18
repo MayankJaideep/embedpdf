@@ -51,7 +51,8 @@ const METRIC_ROWS = [
 
 function Benchmark() {
   const [file, setFile] = useState<File | null>(null);
-  const [query, setQuery] = useState("the");
+  const [query, setQuery] = useState("common");
+  const [warmup, setWarmup] = useState(true);
   const [status, setStatus] = useState<string>("");
   const [running, setRunning] = useState(false);
   const [runs, setRuns] = useState<BenchRun[]>([]);
