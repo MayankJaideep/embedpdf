@@ -68,9 +68,13 @@ export async function runEmbedPdfBenchmark(
       }
     });
 
-    // 2. First-page render time — first painted page canvas
-    const renderedAt = await waitForFirstCanvas(container);
-    metrics.firstPageRenderMs = renderedAt - t0;
+    // 2. First-page render time — first painted page canvas (non-fatal if not detectable)
+    try {
+      const renderedAt = await waitForFirstCanvas(container, 20000);
+      metrics.firstPageRenderMs = renderedAt - t0;
+    } catch {
+      metrics.firstPageRenderMs = null;
+    }
 
     // 3. Search time — SDK searchAllPages task
     if (search) {
