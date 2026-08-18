@@ -148,8 +148,10 @@ export function waitForFirstCanvas(container: HTMLElement, timeoutMs = 60000): P
       else reject(new Error("first page render timeout"));
     };
     const check = () => {
-      const canvases = Array.from(container.querySelectorAll("canvas"));
-      const painted = canvases.find((c) => c.width > 1 && c.height > 1 && c.offsetParent !== null);
+      const canvases = deepCanvases(container);
+      const painted = canvases.find(
+        (c) => c.width > 1 && c.height > 1 && c.getBoundingClientRect().width > 1,
+      );
       if (painted) requestAnimationFrame(() => finish(true));
       else if (performance.now() - start > timeoutMs) finish(false);
     };
