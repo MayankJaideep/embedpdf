@@ -51,7 +51,8 @@ const METRIC_ROWS = [
 
 function Benchmark() {
   const [file, setFile] = useState<File | null>(null);
-  const [query, setQuery] = useState("the");
+  const [query, setQuery] = useState("common");
+  const [warmup, setWarmup] = useState(true);
   const [status, setStatus] = useState<string>("");
   const [running, setRunning] = useState(false);
   const [runs, setRuns] = useState<BenchRun[]>([]);
@@ -95,11 +96,34 @@ function Benchmark() {
       userAgent: navigator.userAgent,
     };
 
+    const newUrl = () =>
+      URL.createObjectURL(new Blob([buffer.slice(0)], { type: "application/pdf" }));
+    const cool = async (ms = 1500) => {
+      stage.innerHTML = "";
+      await new Promise((r) => setTimeout(r, ms));
+    };
+
     try {
+      // ---- Module preload (kept out of every measurement) ----
+      setStatus("Preparing SDKs…");
+      const { runEmbedPdfBenchmark, EMBEDPDF_VERSION } = await import("@/lib/bench-embedpdf");
+      const { runNutrientBenchmark } = await import("@/lib/bench-nutrient");
+
+      // ---- Warm-up pass: identical for both SDKs, results discarded ----
+      if (warmup) {
+        setStatus("Warm-up: EmbedPDF…");
+        const wUrl = newUrl();
+        await runEmbedPdfBenchmark(stage, wUrl, query);
+        URL.revokeObjectURL(wUrl);
+        await cool();
+        setStatus("Warm-up: PSPDFKit / Nutrient…");
+        await runNutrientBenchmark(stage, buffer, query);
+        await cool();
+      }
+
       // ---- Pass 1: EmbedPDF ----
       setStatus("Running EmbedPDF…");
-      const { runEmbedPdfBenchmark, EMBEDPDF_VERSION } = await import("@/lib/bench-embedpdf");
-      const url = URL.createObjectURL(new Blob([buffer.slice(0)], { type: "application/pdf" }));
+      const url = newUrl();
       const embed = await runEmbedPdfBenchmark(stage, url, query);
       URL.revokeObjectURL(url);
       persist({
@@ -113,12 +137,10 @@ function Benchmark() {
 
       // ---- Full reset between libraries ----
       setStatus("Resetting viewer…");
-      stage.innerHTML = "";
-      await new Promise((r) => setTimeout(r, 1500));
+      await cool();
 
       // ---- Pass 2: PSPDFKit / Nutrient ----
       setStatus("Running PSPDFKit / Nutrient…");
-      const { runNutrientBenchmark } = await import("@/lib/bench-nutrient");
       const nutrient = await runNutrientBenchmark(stage, buffer, query);
       persist({
         ...base,
@@ -191,6 +213,14 @@ function Benchmark() {
               onChange={(e) => setQuery(e.target.value)}
               className="w-40 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
             />
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={warmup}
+                onChange={(e) => setWarmup(e.target.checked)}
+              />
+              Warm-up pass (fair caches)
+            </label>
             <button
               onClick={runBenchmark}
               disabled={!file || running || !query.trim()}

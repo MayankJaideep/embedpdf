@@ -120,6 +120,28 @@ export function downloadCsv(runs: BenchRun[], fileName = "pdf-benchmark.csv") {
   URL.revokeObjectURL(url);
 }
 
+/** Collects canvases across nested shadow roots (EmbedPDF renders inside a web component). */
+function deepCanvases(root: ParentNode): HTMLCanvasElement[] {
+  const out: HTMLCanvasElement[] = [];
+  const walk = (node: ParentNode) => {
+    out.push(...(Array.from(node.querySelectorAll("canvas")) as HTMLCanvasElement[]));
+    for (const el of Array.from(node.querySelectorAll("*"))) {
+      const sr = (el as HTMLElement).shadowRoot;
+      if (sr) walk(sr);
+      if (el instanceof HTMLIFrameElement) {
+        try {
+          const doc = el.contentDocument;
+          if (doc) walk(doc);
+        } catch {
+          /* cross-origin iframe */
+        }
+      }
+    }
+  };
+  walk(root);
+  return out;
+}
+
 /** Waits until the first real page canvas exists and has painted pixels. */
 export function waitForFirstCanvas(container: HTMLElement, timeoutMs = 60000): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -134,8 +156,10 @@ export function waitForFirstCanvas(container: HTMLElement, timeoutMs = 60000): P
       else reject(new Error("first page render timeout"));
     };
     const check = () => {
-      const canvases = Array.from(container.querySelectorAll("canvas"));
-      const painted = canvases.find((c) => c.width > 1 && c.height > 1 && c.offsetParent !== null);
+      const canvases = deepCanvases(container);
+      const painted = canvases.find(
+        (c) => c.width > 1 && c.height > 1 && c.getBoundingClientRect().width > 1,
+      );
       if (painted) requestAnimationFrame(() => finish(true));
       else if (performance.now() - start > timeoutMs) finish(false);
     };
