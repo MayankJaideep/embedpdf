@@ -213,6 +213,14 @@ function Benchmark() {
               onChange={(e) => setQuery(e.target.value)}
               className="w-40 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
             />
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={warmup}
+                onChange={(e) => setWarmup(e.target.checked)}
+              />
+              Warm-up pass (fair caches)
+            </label>
             <button
               onClick={runBenchmark}
               disabled={!file || running || !query.trim()}
