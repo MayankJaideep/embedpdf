@@ -137,12 +137,10 @@ function Benchmark() {
 
       // ---- Full reset between libraries ----
       setStatus("Resetting viewer…");
-      stage.innerHTML = "";
-      await new Promise((r) => setTimeout(r, 1500));
+      await cool();
 
       // ---- Pass 2: PSPDFKit / Nutrient ----
       setStatus("Running PSPDFKit / Nutrient…");
-      const { runNutrientBenchmark } = await import("@/lib/bench-nutrient");
       const nutrient = await runNutrientBenchmark(stage, buffer, query);
       persist({
         ...base,
