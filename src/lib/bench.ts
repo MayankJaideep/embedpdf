@@ -128,6 +128,14 @@ function deepCanvases(root: ParentNode): HTMLCanvasElement[] {
     for (const el of Array.from(node.querySelectorAll("*"))) {
       const sr = (el as HTMLElement).shadowRoot;
       if (sr) walk(sr);
+      if (el instanceof HTMLIFrameElement) {
+        try {
+          const doc = el.contentDocument;
+          if (doc) walk(doc);
+        } catch {
+          /* cross-origin iframe */
+        }
+      }
     }
   };
   walk(root);
