@@ -44,7 +44,8 @@ const METRIC_ROWS = [
         : `${fmtMs(r.metrics.searchMs)} · ${r.metrics.searchResults ?? 0} hits`,
   ],
   ["Annotation response", (r: BenchRun) => fmtMs(r.metrics.annotationMs)],
-  ["JS heap used", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBytes)],
+  ["JS heap used (delta)", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBytes)],
+  ["JS heap baseline", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBaselineBytes)],
   ["Page count", (r: BenchRun) => (r.pageCount == null ? "—" : String(r.pageCount))],
   ["PDF size", (r: BenchRun) => fmtBytes(r.fileSize)],
 ] as const;
@@ -143,7 +144,9 @@ function Benchmark() {
 
       // ---- Pass 2: PSPDFKit / Nutrient ----
       setStatus("Running PSPDFKit / Nutrient…");
-      const nutrient = await runNutrientBenchmark(stage, buffer, query);
+      const nUrl = newUrl();
+      const nutrient = await runNutrientBenchmark(stage, nUrl, query);
+      URL.revokeObjectURL(nUrl);
       persist({
         ...base,
         id: crypto.randomUUID(),
