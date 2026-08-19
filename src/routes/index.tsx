@@ -5,6 +5,7 @@ import {
   downloadCsv,
   fmtBytes,
   fmtMs,
+  heapDelta,
   loadRuns,
   saveRuns,
   type BenchRun,
@@ -44,7 +45,12 @@ const METRIC_ROWS = [
         : `${fmtMs(r.metrics.searchMs)} · ${r.metrics.searchResults ?? 0} hits`,
   ],
   ["Annotation response", (r: BenchRun) => fmtMs(r.metrics.annotationMs)],
-  ["JS heap used", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBytes)],
+  ["JS heap after run", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBytes)],
+  ["JS heap baseline", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBaselineBytes)],
+  [
+    "JS heap growth",
+    (r: BenchRun) => fmtBytes(heapDelta(r.metrics.jsHeapBaselineBytes, r.metrics.jsHeapBytes)),
+  ],
   ["Page count", (r: BenchRun) => (r.pageCount == null ? "—" : String(r.pageCount))],
   ["PDF size", (r: BenchRun) => fmtBytes(r.fileSize)],
 ] as const;
@@ -117,7 +123,9 @@ function Benchmark() {
         URL.revokeObjectURL(wUrl);
         await cool();
         setStatus("Warm-up: PSPDFKit / Nutrient…");
-        await runNutrientBenchmark(stage, buffer, query);
+        const wUrl2 = newUrl();
+        await runNutrientBenchmark(stage, wUrl2, query);
+        URL.revokeObjectURL(wUrl2);
         await cool();
       }
 
@@ -141,7 +149,9 @@ function Benchmark() {
 
       // ---- Pass 2: PSPDFKit / Nutrient ----
       setStatus("Running PSPDFKit / Nutrient…");
-      const nutrient = await runNutrientBenchmark(stage, buffer, query);
+      const nUrl = newUrl();
+      const nutrient = await runNutrientBenchmark(stage, nUrl, query);
+      URL.revokeObjectURL(nUrl);
       persist({
         ...base,
         id: crypto.randomUUID(),

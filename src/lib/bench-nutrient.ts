@@ -1,4 +1,4 @@
-import { readHeap, waitForFirstCanvas, type BenchMetrics } from "./bench";
+import { settleHeap, waitForFirstCanvas, type BenchMetrics } from "./bench";
 
 export interface NutrientRunResult {
   metrics: BenchMetrics;
@@ -14,7 +14,7 @@ async function getSdk() {
 /** Runs the full PSPDFKit/Nutrient measurement sequence inside `container`, then unloads it. */
 export async function runNutrientBenchmark(
   container: HTMLElement,
-  buffer: ArrayBuffer,
+  fileUrl: string,
   query: string,
 ): Promise<NutrientRunResult> {
   const metrics: BenchMetrics = {
@@ -24,6 +24,7 @@ export async function runNutrientBenchmark(
     searchResults: null,
     annotationMs: null,
     jsHeapBytes: null,
+    jsHeapBaselineBytes: null,
   };
   let pageCount: number | null = null;
   let version = "unknown";
@@ -31,12 +32,14 @@ export async function runNutrientBenchmark(
   version = NutrientViewer.version ?? "unknown";
 
   try {
+    metrics.jsHeapBaselineBytes = await settleHeap();
     const t0 = performance.now();
 
     // 1. PDF load time — SDK load() resolution (document ready)
+    // Same blob URL source as EmbedPDF so both pay identical fetch cost.
     const instance = await NutrientViewer.load({
       container,
-      document: buffer.slice(0),
+      document: fileUrl,
       baseUrl: `https://cdn.cloud.pspdfkit.com/pspdfkit-web@${version}/`,
     });
     metrics.loadMs = performance.now() - t0;
@@ -79,7 +82,7 @@ export async function runNutrientBenchmark(
     await instance.create(annotation);
     metrics.annotationMs = (await annotationDone) - a0;
 
-    metrics.jsHeapBytes = readHeap();
+    metrics.jsHeapBytes = await settleHeap();
   } catch (err) {
     metrics.error = err instanceof Error ? err.message : String(err);
   } finally {
