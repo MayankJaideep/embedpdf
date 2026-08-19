@@ -82,7 +82,7 @@ export async function runNutrientBenchmark(
     await instance.create(annotation);
     metrics.annotationMs = (await annotationDone) - a0;
 
-    metrics.jsHeapBytes = readHeap();
+    metrics.jsHeapBytes = heapDelta(metrics.jsHeapBaselineBytes, await settleHeap());
   } catch (err) {
     metrics.error = err instanceof Error ? err.message : String(err);
   } finally {

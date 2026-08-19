@@ -117,7 +117,9 @@ function Benchmark() {
         URL.revokeObjectURL(wUrl);
         await cool();
         setStatus("Warm-up: PSPDFKit / Nutrient…");
-        await runNutrientBenchmark(stage, buffer, query);
+        const wUrl2 = newUrl();
+        await runNutrientBenchmark(stage, wUrl2, query);
+        URL.revokeObjectURL(wUrl2);
         await cool();
       }
 
