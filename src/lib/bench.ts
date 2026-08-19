@@ -7,6 +7,7 @@ export interface BenchMetrics {
   searchResults: number | null;
   annotationMs: number | null;
   jsHeapBytes: number | null;
+  jsHeapBaselineBytes: number | null;
   error?: string;
 }
 
@@ -47,6 +48,28 @@ export function saveRuns(runs: BenchRun[]) {
 export function readHeap(): number | null {
   const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
   return mem ? mem.usedJSHeapSize : null;
+}
+
+/**
+ * Lets allocations settle (and collects if the browser exposes gc) so both SDKs
+ * are sampled under identical conditions before/after a run.
+ */
+export async function settleHeap(): Promise<number | null> {
+  const maybeGc = (globalThis as { gc?: () => void }).gc;
+  try {
+    maybeGc?.();
+  } catch {
+    /* gc unavailable */
+  }
+  await new Promise((r) => setTimeout(r, 400));
+  await new Promise((r) => requestAnimationFrame(() => r(null)));
+  return readHeap();
+}
+
+/** Heap attributable to a run: post-run usage minus the pre-run baseline. */
+export function heapDelta(before: number | null, after: number | null): number | null {
+  if (before == null || after == null) return null;
+  return Math.max(0, after - before);
 }
 
 export function fmtMs(v: number | null | undefined) {
