@@ -97,6 +97,7 @@ const CSV_COLUMNS = [
   "searchResults",
   "annotationMs",
   "jsHeapBytes",
+  "jsHeapBaselineBytes",
   "error",
   "userAgent",
 ] as const;
@@ -123,6 +124,7 @@ export function runsToCsv(runs: BenchRun[]) {
         r.metrics.searchResults ?? "",
         r.metrics.annotationMs?.toFixed(2) ?? "",
         r.metrics.jsHeapBytes ?? "",
+        r.metrics.jsHeapBaselineBytes ?? "",
         r.metrics.error ?? "",
         r.userAgent,
       ]
