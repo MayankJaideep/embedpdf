@@ -7,7 +7,7 @@ import {
   type DocumentManagerPlugin,
 } from "@embedpdf/react-pdf-viewer";
 import { PdfAnnotationSubtype } from "@embedpdf/models";
-import { readHeap, waitForFirstCanvas, type BenchMetrics } from "./bench";
+import { heapDelta, settleHeap, waitForFirstCanvas, type BenchMetrics } from "./bench";
 
 export const EMBEDPDF_VERSION = "2.15.0";
 
@@ -29,11 +29,14 @@ export async function runEmbedPdfBenchmark(
     searchResults: null,
     annotationMs: null,
     jsHeapBytes: null,
+    jsHeapBaselineBytes: null,
   };
   let pageCount: number | null = null;
   const holder: { root?: Root } = {};
 
   try {
+    metrics.jsHeapBaselineBytes = await settleHeap();
+    const t0 = performance.now();
     const registryReady = new Promise<PluginRegistry>((resolve) => {
       holder.root = createRoot(container);
       holder.root.render(
