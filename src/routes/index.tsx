@@ -5,6 +5,7 @@ import {
   downloadCsv,
   fmtBytes,
   fmtMs,
+  heapDelta,
   loadRuns,
   saveRuns,
   type BenchRun,
@@ -44,8 +45,12 @@ const METRIC_ROWS = [
         : `${fmtMs(r.metrics.searchMs)} · ${r.metrics.searchResults ?? 0} hits`,
   ],
   ["Annotation response", (r: BenchRun) => fmtMs(r.metrics.annotationMs)],
-  ["JS heap used (delta)", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBytes)],
+  ["JS heap after run", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBytes)],
   ["JS heap baseline", (r: BenchRun) => fmtBytes(r.metrics.jsHeapBaselineBytes)],
+  [
+    "JS heap growth",
+    (r: BenchRun) => fmtBytes(heapDelta(r.metrics.jsHeapBaselineBytes, r.metrics.jsHeapBytes)),
+  ],
   ["Page count", (r: BenchRun) => (r.pageCount == null ? "—" : String(r.pageCount))],
   ["PDF size", (r: BenchRun) => fmtBytes(r.fileSize)],
 ] as const;

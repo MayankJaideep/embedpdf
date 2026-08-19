@@ -1,4 +1,4 @@
-import { heapDelta, settleHeap, waitForFirstCanvas, type BenchMetrics } from "./bench";
+import { settleHeap, waitForFirstCanvas, type BenchMetrics } from "./bench";
 
 export interface NutrientRunResult {
   metrics: BenchMetrics;
@@ -82,7 +82,7 @@ export async function runNutrientBenchmark(
     await instance.create(annotation);
     metrics.annotationMs = (await annotationDone) - a0;
 
-    metrics.jsHeapBytes = heapDelta(metrics.jsHeapBaselineBytes, await settleHeap());
+    metrics.jsHeapBytes = await settleHeap();
   } catch (err) {
     metrics.error = err instanceof Error ? err.message : String(err);
   } finally {
